@@ -19,13 +19,19 @@ struct ContentView : View {
     var body: some View {
         List(colors, id: \.name) { color in
             HStack {
-                Color(uiColor: color.color)
+                Color(uiColor: color.lightColor)
+                    .frame(width: 30, height: 30)
+
+                Color(uiColor: color.darkColor)
                     .frame(width: 30, height: 30)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(color.name)
                     HStack {
-                        Text(color.hexDescription)
+                        Text(color.lightHexDescription)
+                            .font(.subheadline)
+
+                        Text(color.darkHexDescription)
                             .font(.subheadline)
                     }
                 }

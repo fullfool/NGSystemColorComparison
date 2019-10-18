@@ -66,17 +66,29 @@ struct CodableSystemColor: Codable {
     let name: String
     let hexString: String
     let rgbaString: String
+    let darkHexString: String
+    let darkRgbaString: String
 }
 
 struct SystemColor {
     let name: String
     let color: UIColor
 
+    var lightColor: UIColor {
+        return color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+    }
+
+    var darkColor: UIColor {
+        return color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+    }
+
     var codableRepresentation: CodableSystemColor {
         return CodableSystemColor(
             name: self.name,
             hexString: self.color.toHexString(),
-            rgbaString: self.color.toRGBAString()
+            rgbaString: self.color.toRGBAString(),
+            darkHexString: darkColor.toHexString(),
+            darkRgbaString: darkColor.toRGBAString()
         )
     }
 
@@ -84,24 +96,62 @@ struct SystemColor {
         return self.color.toHexString()
     }
 
+    var lightHexDescription: String {
+        return lightColor.toHexString()
+    }
+
+    var darkHexDescription: String {
+        return darkColor.toHexString()
+    }
+
     var uiColorDescription: String {
         return "UIColor(red: \(color.red), green: \(color.green), blue: \(color.blue), alpha: \(color.alpha))"
     }
 
-    var parameterDescription: String {
-        return """
-            static var \(name): UIColor {
-                if #available(iOS 13, *) {
-                    return .\(name)
-                }
-                return \(uiColorDescription)
-            }
-        """
+    var lightUiColorDescription: String {
+        return "public static let \(name)Light = UIColor(red: \(lightColor.red), green: \(lightColor.green), blue: \(lightColor.blue), alpha: \(lightColor.alpha))"
     }
 
+    var darkUiColorDescription: String {
+        return "public static let \(name)Dark = UIColor(red: \(darkColor.red), green: \(darkColor.green), blue: \(darkColor.blue), alpha: \(darkColor.alpha))"
+    }
+
+//    var parameterDescription: String {
+//        return """
+//            static var \(name): UIColor {
+//                if #available(iOS 13, *) {
+//                    return .\(name)
+//                }
+//                return \(uiColorDescription)
+//            }
+//        """
+//    }
+
+    var parameterDescription: String {
+        return "public static var \(name): UIColor { return darkMode ? \(name)Dark : \(name)Light}"
+    }
+
+//    static var extensionDescription: String {
+//        return """
+//        enum ColorCompatibility {
+//            \(Self.colors.map { $0.parameterDescription }.joined(separator: "\n"))
+//        }
+//        """
+//    }
     static var extensionDescription: String {
         return """
-        enum ColorCompatibility {
+        @objcMembers
+        public class ColorCompatibility: NSObject {
+
+            public static var darkMode = false
+
+        // MARK: - Light Style Colors
+            \(Self.colors.map { $0.lightUiColorDescription }.joined(separator: "\n"))
+
+        // MARK: - Dark Style Colors
+            \(Self.colors.map { $0.darkUiColorDescription }.joined(separator: "\n"))
+
+        // MARK: - UIElement Colors
             \(Self.colors.map { $0.parameterDescription }.joined(separator: "\n"))
         }
         """
